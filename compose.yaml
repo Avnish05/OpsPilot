@@ -1,0 +1,27 @@
+name: opspilot
+
+services:
+  postgres:
+    image: postgres:18.4
+    container_name: opspilot-postgres
+
+    environment:
+      POSTGRES_DB: opspilot
+      POSTGRES_USER: opspilot
+      POSTGRES_PASSWORD: opspilot_local_password
+      TZ: UTC
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - opspilot-postgres-data:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opspilot -d opspilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  opspilot-postgres-data:

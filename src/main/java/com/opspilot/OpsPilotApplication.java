@@ -1,13 +1,13 @@
-package com.opspilot.opspilot;
+package com.opspilot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class OpspilotApplication {
+public class OpsPilotApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(OpspilotApplication.class, args);
+		SpringApplication.run(OpsPilotApplication.class, args);
 	}
 
 }
