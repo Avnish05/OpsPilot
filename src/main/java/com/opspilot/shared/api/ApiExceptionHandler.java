@@ -2,6 +2,7 @@ package com.opspilot.shared.api;
 
 import com.opspilot.servicecatalog.domain.MonitoredServiceNotFoundException;
 import com.opspilot.servicecatalog.domain.ServiceAlreadyExistsException;
+import com.opspilot.deployment.domain.DeploymentNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -11,8 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
-    @ExceptionHandler(MonitoredServiceNotFoundException.class)
-    ProblemDetail notFound(MonitoredServiceNotFoundException exception) {
+    @ExceptionHandler({MonitoredServiceNotFoundException.class, DeploymentNotFoundException.class})
+    ProblemDetail notFound(RuntimeException exception) {
         return problem(HttpStatus.NOT_FOUND, "Resource not found", exception.getMessage());
     }
 
