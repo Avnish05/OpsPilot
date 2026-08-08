@@ -2,13 +2,14 @@
 
 OpsPilot is an AI-assisted incident-management platform for operational teams. It is being built as a Java modular monolith: services are registered, deployments are recorded, alerts are correlated into incidents, and future AI investigations will help engineers understand probable causes and next actions.
 
-> Current delivery: **Phase 2 complete** — Service Catalog and Deployment History are available.
+> Current delivery: **Phase 3 complete** — Service Catalog, Deployment History, and JWT Security are available.
 
 ## What works today
 
 - Register, retrieve, list, and update monitored services.
 - Record deployments against an existing service.
 - Retrieve a deployment and view paginated service deployment history.
+- Register engineers, authenticate with RSA-signed JWTs, and retrieve the current user.
 - PostgreSQL schema management through Flyway.
 - PostgreSQL Testcontainers integration tests.
 
@@ -58,12 +59,42 @@ Expected response:
 
 ## API walkthrough
 
-> Authentication is intentionally open during Phases 1–2. Phase 3 adds JWT-based security; do not expose this development configuration publicly.
+> All business endpoints require a Bearer token. Only health, registration, and login are public.
+
+### Register and authenticate
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "engineer@example.com",
+    "password": "very-secure-password"
+  }'
+```
+
+Registration always creates an `ENGINEER`. Log in to receive a 15-minute access token:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "engineer@example.com",
+    "password": "very-secure-password"
+  }'
+```
+
+Copy `accessToken` into `TOKEN`, then use it with business endpoints:
+
+```bash
+TOKEN='your-jwt'
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/auth/me
+```
 
 ### Create a monitored service
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/services \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "payment-service",
@@ -82,13 +113,14 @@ SERVICE_ID='your-service-uuid'
 ### List monitored services
 
 ```bash
-curl "http://localhost:8080/api/v1/services?page=0&size=20"
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/v1/services?page=0&size=20"
 ```
 
 ### Update a monitored service
 
 ```bash
 curl -X PATCH "http://localhost:8080/api/v1/services/$SERVICE_ID" \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "ownerTeam": "payments-platform",
@@ -100,6 +132,7 @@ curl -X PATCH "http://localhost:8080/api/v1/services/$SERVICE_ID" \
 
 ```bash
 curl -X POST "http://localhost:8080/api/v1/services/$SERVICE_ID/deployments" \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "releaseVersion": "2.4.1",
@@ -113,7 +146,7 @@ Deployment statuses: `STARTED`, `SUCCEEDED`, `FAILED`, `ROLLED_BACK`.
 ### View deployment history
 
 ```bash
-curl "http://localhost:8080/api/v1/services/$SERVICE_ID/deployments?page=0&size=20"
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/v1/services/$SERVICE_ID/deployments?page=0&size=20"
 ```
 
 Results are paginated and sorted by `deployedAt` descending.
@@ -122,7 +155,7 @@ Results are paginated and sorted by `deployedAt` descending.
 
 ```bash
 DEPLOYMENT_ID='your-deployment-uuid'
-curl "http://localhost:8080/api/v1/deployments/$DEPLOYMENT_ID"
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/v1/deployments/$DEPLOYMENT_ID"
 ```
 
 <details>
@@ -131,6 +164,9 @@ curl "http://localhost:8080/api/v1/deployments/$DEPLOYMENT_ID"
 | Method | Endpoint | Success |
 | --- | --- | --- |
 | `POST` | `/api/v1/services` | `201 Created` |
+| `POST` | `/api/v1/auth/register` | `201 Created` |
+| `POST` | `/api/v1/auth/login` | `200 OK` |
+| `GET` | `/api/v1/auth/me` | `200 OK` |
 | `GET` | `/api/v1/services/{serviceId}` | `200 OK` |
 | `GET` | `/api/v1/services?page=0&size=20` | `200 OK` |
 | `PATCH` | `/api/v1/services/{serviceId}` | `200 OK` |
@@ -193,7 +229,7 @@ Never edit a migration that has been applied to a shared database. Add a new mig
 
 - [x] Phase 1 — Service Catalog
 - [x] Phase 2 — Deployments
-- [ ] Phase 3 — Security: registration, JWT login, roles, API protection
+- [x] Phase 3 — Security: registration, JWT login, roles, API protection
 - [ ] Phase 4 — Alerts and Incidents through REST
 - [ ] Phase 5 — Kafka and local alert simulator
 - [ ] Phase 6 — AI Investigation with Ollama
@@ -206,3 +242,4 @@ The detailed architecture and delivery guide is available in [OPSPILOT_CODEX_IMP
 - JPA entities never cross the REST boundary.
 - Database constraints and Java validation both protect business input.
 - Pagination is required for collection endpoints.
+- RSA keys are generated in memory for local development; restarting the app invalidates existing tokens. Production key storage is intentionally deferred and keys are never committed.

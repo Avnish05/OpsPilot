@@ -3,6 +3,8 @@ package com.opspilot.shared.api;
 import com.opspilot.servicecatalog.domain.MonitoredServiceNotFoundException;
 import com.opspilot.servicecatalog.domain.ServiceAlreadyExistsException;
 import com.opspilot.deployment.domain.DeploymentNotFoundException;
+import com.opspilot.auth.domain.InvalidCredentialsException;
+import com.opspilot.auth.domain.UserAlreadyExistsException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -17,7 +19,7 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.NOT_FOUND, "Resource not found", exception.getMessage());
     }
 
-    @ExceptionHandler({ServiceAlreadyExistsException.class, DataIntegrityViolationException.class})
+    @ExceptionHandler({ServiceAlreadyExistsException.class, UserAlreadyExistsException.class, DataIntegrityViolationException.class})
     ProblemDetail conflict(Exception exception) {
         return problem(HttpStatus.CONFLICT, "Conflict", exception.getMessage());
     }
@@ -25,6 +27,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class})
     ProblemDetail badRequest(Exception exception) {
         return problem(HttpStatus.BAD_REQUEST, "Validation failed", "Request validation failed");
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ProblemDetail unauthorized(InvalidCredentialsException exception) {
+        return problem(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid email or password");
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {
