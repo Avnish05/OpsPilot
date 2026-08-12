@@ -230,7 +230,7 @@ Never edit a migration that has been applied to a shared database. Add a new mig
 - [x] Phase 1 — Service Catalog
 - [x] Phase 2 — Deployments
 - [x] Phase 3 — Security: registration, JWT login, roles, API protection
-- [ ] Phase 4 — Alerts and Incidents through REST
+- [x] Phase 4 — Alerts and Incidents through REST
 - [ ] Phase 5 — Kafka and local alert simulator
 - [ ] Phase 6 — AI Investigation with Ollama
 

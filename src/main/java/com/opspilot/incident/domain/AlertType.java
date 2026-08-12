@@ -1,0 +1,2 @@
+package com.opspilot.incident.domain;
+public enum AlertType { HIGH_ERROR_RATE, HIGH_LATENCY, DATABASE_TIMEOUT, MEMORY_PRESSURE, AUTH_FAILURE_SPIKE, KAFKA_CONSUMER_LAG }
