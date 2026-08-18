@@ -2,7 +2,7 @@
 
 OpsPilot is an AI-assisted incident-management platform for operational teams. It is being built as a Java modular monolith: services are registered, deployments are recorded, alerts are correlated into incidents, and future AI investigations will help engineers understand probable causes and next actions.
 
-> Current delivery: **Phase 6 complete** — alert and incident management, Kafka ingestion, and local AI investigations are available.
+> Current delivery: **Phase 7 complete** — observability, health checks, coverage reporting, architecture tests, and CI are available.
 
 ## What works today
 
@@ -13,6 +13,7 @@ OpsPilot is an AI-assisted incident-management platform for operational teams. I
 - Create alerts manually or ingest simulator alert events through Kafka; duplicate event IDs are ignored.
 - Correlate alerts into incidents and manage their acknowledgement, investigation, and resolution lifecycle.
 - Generate persisted AI investigation recommendations from trusted incident, alert, service, and deployment context.
+- Trace requests with correlation IDs and observe alert, incident, and AI activity through Actuator metrics.
 - PostgreSQL schema management through Flyway.
 - PostgreSQL Testcontainers integration tests.
 
@@ -67,6 +68,8 @@ Expected response:
 ```json
 {"status":"UP"}
 ```
+
+The response includes an `X-Correlation-ID` header; send this header on related requests to trace them through logs.
 
 ## API walkthrough
 
@@ -240,6 +243,8 @@ Docker must be running because repository integration tests start PostgreSQL wit
 ./mvnw clean test
 ```
 
+The command generates a coverage report at `target/site/jacoco/index.html`. Authenticated users can inspect custom counters at `/actuator/metrics`. A basic k6 script is provided at `docs/load-test.js` and runs with `BASE_URL=http://localhost:8080 k6 run docs/load-test.js`.
+
 ## Architecture
 
 OpsPilot uses a modular-monolith design. Each module follows four layers:
@@ -288,6 +293,7 @@ Never edit a migration that has been applied to a shared database. Add a new mig
 - [x] Phase 4 — Alerts and Incidents through REST
 - [x] Phase 5 — Kafka and local alert simulator
 - [x] Phase 6 — AI Investigation with Ollama
+- [x] Phase 7 — Hardening
 
 The detailed architecture and delivery guide is available in [OPSPILOT_CODEX_IMPLEMENTATION_GUIDE.md](docs/architecture/OPSPILOT_CODEX_IMPLEMENTATION_GUIDE.md).
 

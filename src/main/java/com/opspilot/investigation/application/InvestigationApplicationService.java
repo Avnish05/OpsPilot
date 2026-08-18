@@ -12,15 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+import com.opspilot.shared.observability.OpsPilotMetrics;
 
 @Service
 public class InvestigationApplicationService {
     private static final Logger log = LoggerFactory.getLogger(InvestigationApplicationService.class);
     private final IncidentFacade incidents; private final MonitoredServiceQueryService services; private final DeploymentQueryService deployments;
     private final OllamaClient ollama; private final InvestigationPersistenceService persistence; private final ObjectMapper objectMapper;
+    private final OpsPilotMetrics metrics;
     public InvestigationApplicationService(IncidentFacade incidents, MonitoredServiceQueryService services, DeploymentQueryService deployments,
-            OllamaClient ollama, InvestigationPersistenceService persistence, ObjectMapper objectMapper) {
-        this.incidents = incidents; this.services = services; this.deployments = deployments; this.ollama = ollama; this.persistence = persistence; this.objectMapper = objectMapper;
+            OllamaClient ollama, InvestigationPersistenceService persistence, ObjectMapper objectMapper, OpsPilotMetrics metrics) {
+        this.incidents = incidents; this.services = services; this.deployments = deployments; this.ollama = ollama; this.persistence = persistence; this.objectMapper = objectMapper; this.metrics = metrics;
     }
 
     public InvestigationResponse create(UUID incidentId, String question) {
@@ -29,7 +31,10 @@ public class InvestigationApplicationService {
         var service = services.get(context.incident().serviceId());
         var recentDeployments = deployments.listForService(service.id(), 0, 10).content();
         log.info("Built trusted AI investigation context: incidentId={}, alerts={}, deployments={}", incidentId, context.alerts().size(), recentDeployments.size());
-        var result = ollama.investigate(prompt(question, context, service, recentDeployments));
+        AiInvestigationResult result; var timer = metrics.startAiTimer();
+        try { result = ollama.investigate(prompt(question, context, service, recentDeployments)); metrics.aiInvestigation(); }
+        catch (RuntimeException exception) { metrics.aiFailure(); throw exception; }
+        finally { metrics.recordAiDuration(timer); }
         var investigation = persistence.save(incidentId, question, result);
         log.info("Saved AI investigation: investigationId={}, incidentId={}", investigation.id(), incidentId);
         return investigation;

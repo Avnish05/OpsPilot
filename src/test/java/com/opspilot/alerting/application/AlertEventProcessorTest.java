@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import com.opspilot.incident.domain.AlertType;
 import com.opspilot.incident.domain.Severity;
 import com.opspilot.incident.infrastructure.persistence.IncidentFacade;
+import com.opspilot.shared.observability.OpsPilotMetrics;
 import jakarta.validation.Validation;
 import java.time.Clock;
 import java.time.Instant;
@@ -19,8 +20,9 @@ import org.junit.jupiter.api.Test;
 class AlertEventProcessorTest {
     private final ProcessedEventRepository processedEvents = mock(ProcessedEventRepository.class);
     private final IncidentFacade incidents = mock(IncidentFacade.class);
+    private final OpsPilotMetrics metrics = mock(OpsPilotMetrics.class);
     private final AlertEventProcessor processor = new AlertEventProcessor(processedEvents, incidents,
-            Validation.buildDefaultValidatorFactory().getValidator(), Clock.fixed(Instant.parse("2026-08-12T00:00:00Z"), ZoneOffset.UTC));
+            Validation.buildDefaultValidatorFactory().getValidator(), Clock.fixed(Instant.parse("2026-08-12T00:00:00Z"), ZoneOffset.UTC), metrics);
 
     @Test
     void processesAValidEventOnce() {
