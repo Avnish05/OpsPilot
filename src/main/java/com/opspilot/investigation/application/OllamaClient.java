@@ -37,7 +37,7 @@ public class OllamaClient {
     private String generate(String prompt) {
         try {
             var response = client.post().uri("/api/generate").body(Map.of("model", model, "prompt", prompt, "stream", false,
-                    "format", investigationSchema(), "options", Map.of("temperature", 0)))
+                    "format", InvestigationResponseSchema.jsonSchema(), "options", Map.of("temperature", 0)))
                     .retrieve().body(OllamaGenerateResponse.class);
             if (response == null || response.response() == null) throw new InvalidAiResponseException("Ollama returned no response");
             log.info("Received response from Ollama: model={}, responseLength={}", model, response.response().length());
@@ -70,15 +70,6 @@ public class OllamaClient {
     }
 
     private boolean blank(String value) { return value == null || value.isBlank(); }
-    private Map<String, Object> investigationSchema() {
-        Map<String, Object> action = Map.of("type", "object", "properties", Map.of(
-                "action", Map.of("type", "string"), "rationale", Map.of("type", "string"), "risk", Map.of("type", "string", "enum", List.of("LOW", "MEDIUM", "HIGH"))),
-                "required", List.of("action", "rationale", "risk"), "additionalProperties", false);
-        return Map.of("type", "object", "properties", Map.of(
-                "summary", Map.of("type", "string"), "probableCause", Map.of("type", "string"), "confidence", Map.of("type", "number", "minimum", 0, "maximum", 1),
-                "recommendedActions", Map.of("type", "array", "items", action), "limitations", Map.of("type", "array", "items", Map.of("type", "string"))),
-                "required", List.of("summary", "probableCause", "confidence", "recommendedActions", "limitations"), "additionalProperties", false);
-    }
     private record OllamaGenerateResponse(String response) { }
     private record ModelOutput(String summary, String probableCause, Double confidence, List<ModelAction> recommendedActions, List<String> limitations) { }
     private record ModelAction(String action, String rationale, String risk) { }
