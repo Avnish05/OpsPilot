@@ -6,6 +6,8 @@ import com.opspilot.deployment.domain.DeploymentNotFoundException;
 import com.opspilot.auth.domain.InvalidCredentialsException;
 import com.opspilot.auth.domain.UserAlreadyExistsException;
 import com.opspilot.incident.domain.InvalidIncidentStateException;
+import com.opspilot.investigation.application.OllamaUnavailableException;
+import com.opspilot.investigation.application.InvalidAiResponseException;
 import java.util.NoSuchElementException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     ProblemDetail unauthorized(InvalidCredentialsException exception) {
         return problem(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid email or password");
+    }
+
+    @ExceptionHandler(OllamaUnavailableException.class)
+    ProblemDetail serviceUnavailable(OllamaUnavailableException exception) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "AI service unavailable", "Ollama is unavailable");
+    }
+
+    @ExceptionHandler(InvalidAiResponseException.class)
+    ProblemDetail invalidAiResponse(InvalidAiResponseException exception) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "AI response unavailable", "Ollama returned an invalid investigation response");
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

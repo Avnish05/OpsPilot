@@ -31,6 +31,9 @@ opspilot:
   kafka:
     alerts-topic: ops.alerts.raw.v1
     alerts-dlt-topic: ops.alerts.raw.v1-dlt
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:llama3.2}
 
 server:
   port: 8080

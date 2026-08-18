@@ -28,12 +28,15 @@ public class KafkaAlertingConfiguration {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();
     }
 
-    @Bean ConsumerFactory<String, String> alertConsumerFactory(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+    @Bean ConsumerFactory<String, String> alertConsumerFactory(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${spring.kafka.consumer.group-id}") String groupId) {
         return new DefaultKafkaConsumerFactory<>(Map.of(
                 "bootstrap.servers", bootstrapServers,
+                "group.id", groupId,
                 "key.deserializer", StringDeserializer.class,
                 "value.deserializer", StringDeserializer.class,
-                "enable.auto.commit", false));
+                "enable.auto.commit", false,
+                "auto.offset.reset", "earliest"));
     }
 
     @Bean ProducerFactory<String, String> alertProducerFactory(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
